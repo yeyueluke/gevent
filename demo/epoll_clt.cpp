@@ -195,7 +195,7 @@ int main (int argc, char *argv[])
     }
 #endif
 
-    if (g_base.init (2) < 0)
+    if (g_base.init (2) == false)
         return -1; 
 
     printf ("init ok\n"); 
