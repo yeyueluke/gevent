@@ -6,8 +6,8 @@
 
 namespace std
 {
-    //¼æÈİboost::thread_group
-    //Ê¹ÓÃstd::thread´úÌæboost::thread,std::mutex´úÌæboost::shared_mutex
+    //å…¼å®¹boost::thread_group
+    //ä½¿ç”¨std::threadä»£æ›¿boost::thread,std::mutexä»£æ›¿boost::shared_mutex
     class thread_group
     {
     private:
@@ -27,7 +27,7 @@ namespace std
         thread* create_thread(F threadfunc)
         {
             lock_guard<mutex> guard(m);
-            auto_ptr<thread> new_thread(new thread(threadfunc));
+            unique_ptr<thread> new_thread(new thread(threadfunc));
             threads.push_back(new_thread.get());
             return new_thread.release();
         }
