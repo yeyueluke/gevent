@@ -18,45 +18,45 @@
 #endif
 
 #include <mutex>
-#include "jsoncpp/json.h"
+#include <jsoncpp/json/json.h>
 
 
-class GEventHandler; 
-struct GEV_PER_TIMER_DATA; 
+class GEventHandler;
+struct GEV_PER_TIMER_DATA;
 class IEventBase
 {
 public:
 #ifdef WIN32
-    virtual HANDLE iocp () const = 0; 
+    virtual HANDLE iocp () const = 0;
 #else
-    virtual int epfd () const = 0; 
+    virtual int epfd () const = 0;
 #endif
 
-    virtual void* timeout(int due_msec, int period_msec, void *arg, GEventHandler *exist_handler) = 0; 
-    virtual bool cancel_timer(void* tid) = 0; 
-    virtual bool post_timer(GEV_PER_TIMER_DATA *gptd) = 0; 
+    virtual void* timeout(int due_msec, int period_msec, void *arg, GEventHandler *exist_handler) = 0;
+    virtual bool cancel_timer(void* tid) = 0;
+    virtual bool post_timer(GEV_PER_TIMER_DATA *gptd) = 0;
 };
 
 
 #ifdef WIN32
 enum GEV_IOCP_OP
 {
-    OP_TIMEOUT = 1, 
+    OP_TIMEOUT = 1,
     OP_ACCEPT,
     OP_RECV,
 };
-#else 
+#else
 // the purpose of this key is to distinguish different connections with same fd !
 // (when connection break and re-established soon, fd may not change but port will change)
 struct conn_key_t
 {
-    int fd; 
-    unsigned short lport; 
-    unsigned short rport; 
+    int fd;
+    unsigned short lport;
+    unsigned short rport;
 
-    conn_key_t (int f, unsigned short l, unsigned short r); 
-    bool operator< (struct conn_key_t const& rhs) const; 
-}; 
+    conn_key_t (int f, unsigned short l, unsigned short r);
+    bool operator< (struct conn_key_t const& rhs) const;
+};
 #endif
 
 
@@ -67,11 +67,11 @@ struct GEV_PER_HANDLE_DATA
     SOCKADDR_IN raddr;
 
 #ifndef WIN32
-    conn_key_t key () const; 
+    conn_key_t key () const;
 #endif
 
-    GEV_PER_HANDLE_DATA(SOCKET s, SOCKADDR_IN *l, SOCKADDR_IN *r); 
-    virtual ~GEV_PER_HANDLE_DATA(); 
+    GEV_PER_HANDLE_DATA(SOCKET s, SOCKADDR_IN *l, SOCKADDR_IN *r);
+    virtual ~GEV_PER_HANDLE_DATA();
 };
 
 struct GEV_PER_IO_DATA
@@ -83,16 +83,16 @@ struct GEV_PER_IO_DATA
     WSABUF wsa;         // wsa.len is buffer length
     DWORD bytes;        // after compeleted, bytes trasnfered
 #else
-    char *buf; 
-    int len; 
+    char *buf;
+    int len;
 #endif
 
     GEV_PER_IO_DATA(
 #ifdef WIN32
-            GEV_IOCP_OP o, 
+            GEV_IOCP_OP o,
 #endif
-            SOCKET s, int l); 
-    virtual ~GEV_PER_IO_DATA(); 
+            SOCKET s, int l);
+    virtual ~GEV_PER_IO_DATA();
 };
 
 struct GEV_PER_TIMER_DATA
@@ -100,27 +100,27 @@ struct GEV_PER_TIMER_DATA
        : public GEV_PER_IO_DATA
 #endif
 {
-    IEventBase *base; 
-    int due_msec; 
-    int period_msec; 
+    IEventBase *base;
+    int due_msec;
+    int period_msec;
     void *user_arg;
     bool cancelled;
 #ifdef WIN32
-    HANDLE timerque; 
-    HANDLE timer; 
+    HANDLE timerque;
+    HANDLE timer;
 #else
-    timer_t timer; 
+    timer_t timer;
 #endif
 
     GEV_PER_TIMER_DATA(IEventBase *base, int due, int period, void *arg
 #ifdef WIN32
             , HANDLE tq);
 #else
-            , timer_t tid); 
+            , timer_t tid);
 #endif
 
-    virtual ~GEV_PER_TIMER_DATA(); 
-    void cancel (); 
+    virtual ~GEV_PER_TIMER_DATA();
+    void cancel ();
 };
 
 class GEventHandler
@@ -129,32 +129,32 @@ public:
     GEventHandler();
     virtual ~GEventHandler();
 
-    GEV_PER_HANDLE_DATA* gphd(); 
-    GEV_PER_TIMER_DATA* gptd(); 
+    GEV_PER_HANDLE_DATA* gphd();
+    GEV_PER_TIMER_DATA* gptd();
     bool connected();
-    void disconnect(); 
-    void clear(); 
-    SOCKET fd(); 
+    void disconnect();
+    void clear();
+    SOCKET fd();
 
     int send(char const* buf, int len);
     int send(std::string const& str);
-    
+
     virtual bool reuse();
     virtual bool auto_reconnect();
     virtual void arg(void *param) = 0;
     virtual void reset(GEV_PER_HANDLE_DATA *gphd, GEV_PER_TIMER_DATA *gptd, IEventBase *base);
     virtual bool on_read(GEV_PER_IO_DATA *gpid) = 0;
-    virtual void on_error(GEV_PER_HANDLE_DATA *gphd); 
+    virtual void on_error(GEV_PER_HANDLE_DATA *gphd);
     // note when on_timeout called, handler's base may cleared by cancel_timer, use gptd->base instead if it is not null.
-    virtual bool on_timeout(GEV_PER_TIMER_DATA *gptd) = 0; 
+    virtual bool on_timeout(GEV_PER_TIMER_DATA *gptd) = 0;
     virtual void cleanup(bool terminal);
     void close(bool terminal);
 
 protected:
-    GEV_PER_HANDLE_DATA *m_gphd = nullptr; 
-    GEV_PER_TIMER_DATA *m_gptd = nullptr; 
+    GEV_PER_HANDLE_DATA *m_gphd = nullptr;
+    GEV_PER_TIMER_DATA *m_gptd = nullptr;
     IEventBase *m_base = nullptr;
-    // us so instead of m_gphd, 
+    // us so instead of m_gphd,
     // as the later one may destroyed during using..
     SOCKET m_so;
 };
@@ -176,7 +176,7 @@ public:
 protected:
     // protect m_stub to prevent multi-entry
 #ifdef HAS_ET
-    std::mutex m_mutex; 
+    std::mutex m_mutex;
 #endif
 
     std::string m_stub;

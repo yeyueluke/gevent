@@ -1,37 +1,37 @@
 #include "EventHandler.h"
-#include "log.h" 
+#include "log.h"
 
 #ifndef WIN32
 conn_key_t::conn_key_t (int f, unsigned short l, unsigned short r)
 {
-    fd = f; 
-    lport = l; 
-    rport = r; 
+    fd = f;
+    lport = l;
+    rport = r;
 }
 
 bool conn_key_t::operator< (struct conn_key_t const& rhs) const
 {
     if (fd < rhs.fd)
-        return true; 
+        return true;
 
-    if (fd == rhs.fd) 
+    if (fd == rhs.fd)
     {
         if (lport < rhs.lport)
-            return true; 
+            return true;
 
         if (lport == rhs.lport)
         {
             if (rport < rhs.rport)
-                return true; 
+                return true;
         }
     }
 
-    return false; 
+    return false;
 }
 
 conn_key_t GEV_PER_HANDLE_DATA::key () const
 {
-    return conn_key_t(so, ntohs(laddr.sin_port), ntohs(raddr.sin_port)); 
+    return conn_key_t(so, ntohs(laddr.sin_port), ntohs(raddr.sin_port));
 }
 #endif
 
@@ -48,12 +48,12 @@ GEV_PER_HANDLE_DATA::GEV_PER_HANDLE_DATA(SOCKET s, SOCKADDR_IN *l, SOCKADDR_IN *
     else
         memset(&raddr, 0, sizeof(SOCKADDR_IN));
 
-    //writeLog("gphd %p ctor", this); 
+    //writeLog("gphd %p ctor", this);
 }
 
 GEV_PER_HANDLE_DATA::~GEV_PER_HANDLE_DATA()
 {
-    //writeLog("gphd %p dctor", this); 
+    //writeLog("gphd %p dctor", this);
     if (so != INVALID_SOCKET)
     {
         closesocket(so);
@@ -63,7 +63,7 @@ GEV_PER_HANDLE_DATA::~GEV_PER_HANDLE_DATA()
 
 GEV_PER_IO_DATA::GEV_PER_IO_DATA(
 #ifdef WIN32
-        GEV_IOCP_OP o, 
+        GEV_IOCP_OP o,
 #endif
         SOCKET s, int l)
 {
@@ -75,7 +75,7 @@ GEV_PER_IO_DATA::GEV_PER_IO_DATA(
     wsa.buf = new char[l + 1](); // tailing \0
     memset(&ol, 0, sizeof(ol));
 #else
-    len = l; 
+    len = l;
     buf = new char[len+1](); // tailing \0
 #endif
     //writeLog("gpid %p ctor", this);
@@ -87,7 +87,7 @@ GEV_PER_IO_DATA::~GEV_PER_IO_DATA()
 #ifdef WIN32
     delete []wsa.buf;
 #else
-    delete []buf; 
+    delete []buf;
 #endif
 }
 
@@ -112,7 +112,7 @@ GEV_PER_TIMER_DATA::GEV_PER_TIMER_DATA(IEventBase *b, int due, int period, void 
 GEV_PER_TIMER_DATA::~GEV_PER_TIMER_DATA()
 {
     //writeLog("gptd %p dctor", this);
-    cancel (); 
+    cancel ();
 }
 
 void GEV_PER_TIMER_DATA::cancel ()
@@ -123,7 +123,7 @@ void GEV_PER_TIMER_DATA::cancel ()
         return;
     }
 
-    cancelled = true; 
+    cancelled = true;
 #ifdef WIN32
     if (timer != NULL && timerque != NULL)
     {
@@ -139,19 +139,19 @@ void GEV_PER_TIMER_DATA::cancel ()
         timer = NULL;
     }
     else
-        writeLog("timer %p with invalid key %p, que %p", this, timer, timerque); 
+        writeLog("timer %p with invalid key %p, que %p", this, timer, timerque);
 
-    timerque = NULL; 
+    timerque = NULL;
 #else
     if (timer != NULL)
     {
         if (timer_delete (timer) < 0)
-            writeLog("timer_delete %p failed, errno %d", this, errno); 
-        else 
-            writeLog("cancel timer %p", this); 
+            writeLog("timer_delete %p failed, errno %d", this, errno);
+        else
+            writeLog("cancel timer %p", this);
 
         // leave this field to do map later in map
-        //timer = NULL; 
+        //timer = NULL;
     }
 #endif
 }
@@ -170,27 +170,27 @@ GEventHandler::~GEventHandler()
 
 GEV_PER_HANDLE_DATA* GEventHandler::gphd()
 {
-    return m_gphd; 
+    return m_gphd;
 }
 
 GEV_PER_TIMER_DATA* GEventHandler::gptd()
 {
-    return m_gptd; 
+    return m_gptd;
 }
 
 SOCKET GEventHandler::fd()
 {
-    return m_so; 
+    return m_so;
 }
 
 void GEventHandler::close(bool terminal)
 {
-    writeLog("close handler, terminal %d, gphd %p, gptd %p, so %d, base %p", terminal, m_gphd, m_gptd, m_so, m_base); 
+    writeLog("close handler, terminal %d, gphd %p, gptd %p, so %d, base %p", terminal, m_gphd, m_gptd, m_so, m_base);
     if (m_gphd)
     {
         if (terminal)
         {
-            delete m_gphd; 
+            delete m_gphd;
             m_gphd = nullptr;
         }
         else
@@ -207,15 +207,15 @@ void GEventHandler::close(bool terminal)
     {
         if (terminal)
         {
-            delete m_gptd; 
-            m_gptd = nullptr; 
+            delete m_gptd;
+            m_gptd = nullptr;
         }
         else if (!m_gptd->cancelled)
         {
             // gptd will be deleted in map erase
-            m_gptd->cancel (); 
+            m_gptd->cancel ();
             // keep this memory to delete later
-            // m_gptd = nullptr;  
+            // m_gptd = nullptr;
         }
     }
 
@@ -226,18 +226,18 @@ void GEventHandler::close(bool terminal)
 bool GEventHandler::reuse()
 {
     // just delete us when close.
-    return false; 
+    return false;
 }
 
 bool GEventHandler::auto_reconnect()
 {
-    return false; 
+    return false;
 }
 
 void GEventHandler::reset(GEV_PER_HANDLE_DATA *gphd, GEV_PER_TIMER_DATA *gptd, IEventBase *base)
 {
-    m_gphd = gphd; 
-    m_gptd = gptd; 
+    m_gphd = gphd;
+    m_gptd = gptd;
     m_base = base;
     // for timer, no gphd provided
     m_so = gphd ? gphd->so : INVALID_SOCKET;
@@ -250,10 +250,10 @@ bool GEventHandler::connected()
 
 void GEventHandler::disconnect()
 {
-    int fd = -1; 
+    int fd = -1;
     if (m_so != INVALID_SOCKET)
     {
-        fd = m_so; 
+        fd = m_so;
         closesocket(m_so);
         m_so = INVALID_SOCKET;
     }
@@ -261,9 +261,9 @@ void GEventHandler::disconnect()
     if (m_gphd)
     {
         if (fd == -1)
-            fd = m_gphd->so; 
+            fd = m_gphd->so;
 
-        m_gphd->so = INVALID_SOCKET; 
+        m_gphd->so = INVALID_SOCKET;
     }
 }
 
@@ -271,7 +271,7 @@ void GEventHandler::clear()
 {
     m_so = INVALID_SOCKET;
     if (m_gphd)
-        m_gphd->so = INVALID_SOCKET; 
+        m_gphd->so = INVALID_SOCKET;
 }
 
 int GEventHandler::send(char const* buf, int len)
@@ -280,22 +280,22 @@ int GEventHandler::send(char const* buf, int len)
         return SOCKET_ERROR;
 
     //return ::send(m_so, buf, len, 0);
-    int left = len, ret = 0; 
-    char const* ptr = buf; 
+    int left = len, ret = 0;
+    char const* ptr = buf;
     while (ptr < buf + len)
     {
-        ret = ::send(m_so, ptr, left, 0); 
+        ret = ::send(m_so, ptr, left, 0);
         if (ret <= 0)
         {
-            writeLog("send failed, errno %d, sent %d, left %d", WSAGetLastError(), ptr - buf, left); 
+            writeLog("send failed, errno %d, sent %d, left %d", WSAGetLastError(), ptr - buf, left);
             break;
         }
 
-        left -= ret; 
-        ptr += ret; 
+        left -= ret;
+        ptr += ret;
     }
 
-    return left == 0 ? len : -1; 
+    return left == 0 ? len : -1;
 }
 
 int GEventHandler::send(std::string const& str)
@@ -323,9 +323,9 @@ void GJsonEventHandler::arg(void *param)
 
 void GJsonEventHandler::reset(GEV_PER_HANDLE_DATA *gphd, GEV_PER_TIMER_DATA *gptd, IEventBase *base)
 {
-    GEventHandler::reset(gphd, gptd, base); 
-    writeLog("reset stub: %s", m_stub.c_str()); 
-    m_stub.clear(); 
+    GEventHandler::reset(gphd, gptd, base);
+    writeLog("reset stub: %s", m_stub.c_str());
+    m_stub.clear();
 }
 
 bool GJsonEventHandler::on_read(GEV_PER_IO_DATA *gpid)
@@ -339,19 +339,19 @@ bool GJsonEventHandler::on_read(GEV_PER_IO_DATA *gpid)
 #endif
 
 #ifdef WIN32
-    m_stub.append(gpid->wsa.buf, gpid->bytes); 
+    m_stub.append(gpid->wsa.buf, gpid->bytes);
 #else
 #  ifdef HAS_ET
 #    ifdef GEVENT_DUMP
-    writeLog("queue for lock, len %d", gpid->len); 
+    writeLog("queue for lock, len %d", gpid->len);
 #    endif
-    std::unique_lock <std::mutex> guard (m_mutex); 
+    std::unique_lock <std::mutex> guard (m_mutex);
 #    ifdef GEVENT_DUMP
-    writeLog("enter lock"); 
+    writeLog("enter lock");
 #    endif
 #  endif
 
-    m_stub.append (gpid->buf, gpid->len); 
+    m_stub.append (gpid->buf, gpid->len);
 #endif
 
     //writeLog("recv from socket %d, length %d", bufferevent_getfd(m_bev), data.length());
@@ -376,7 +376,7 @@ bool GJsonEventHandler::on_read(GEV_PER_IO_DATA *gpid)
 
         if (!reader.parse(part, root, false))
         {
-            writeLog("json parse error: %s\n%s", reader.getFormatedErrorMessages().c_str(), part.c_str());
+            writeLog("json parse error: %s\n%s", reader.getFormattedErrorMessages().c_str(), part.c_str());
             //LOG("json parse error: %s", part.c_str());
             break;
         }
@@ -389,30 +389,30 @@ bool GJsonEventHandler::on_read(GEV_PER_IO_DATA *gpid)
 
 #ifdef GEVENT_DUMP
         writeLog("recv [%d]: %s", part.size(), part.c_str());
-        //LOG("recv [%d]: %s", part.size(), part.c_str()); 
+        //LOG("recv [%d]: %s", part.size(), part.c_str());
 #endif
         on_read_msg(root);
     }
 
-    return true; 
+    return true;
 }
 
 void GJsonEventHandler::cleanup(bool terminal)
 {
 #ifdef HAS_ET
 #  ifdef GEVENT_DUMP
-    writeLog("queue for lock, reset"); 
+    writeLog("queue for lock, reset");
 #  endif
-    std::unique_lock <std::mutex> guard (m_mutex); 
+    std::unique_lock <std::mutex> guard (m_mutex);
 #  ifdef GEVENT_DUMP
-    writeLog("enter lock"); 
+    writeLog("enter lock");
 #  endif
-    m_stub.clear (); 
+    m_stub.clear ();
 #endif
 }
 
 bool GJsonEventHandler::on_timeout(GEV_PER_TIMER_DATA *gptd)
 {
     //writeLog("event %d for timer %p, id = %d", type, m_ev, m_id);
-    return true; 
+    return true;
 }

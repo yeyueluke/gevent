@@ -6,8 +6,8 @@
 #  define strcasecmp stricmp
 #  define strncasecmp strnicmp
 
-typedef int socklen_t; 
-typedef void* timer_t; 
+typedef int socklen_t;
+typedef void* timer_t;
 
 #else // WIN32
 
@@ -44,15 +44,15 @@ typedef void* timer_t;
 //#  define HRESULT long
 //#  endif
 
-typedef int HRESULT; 
-typedef int SOCKET; 
-typedef struct sockaddr SOCKADDR; 
-typedef struct sockaddr_in SOCKADDR_IN; 
+typedef int HRESULT;
+typedef int SOCKET;
+typedef struct sockaddr SOCKADDR;
+typedef struct sockaddr_in SOCKADDR_IN;
 typedef unsigned short INTERNET_PORT;
-typedef unsigned int DWORD; 
+typedef unsigned int DWORD;
 typedef void* HANDLE;
 typedef void* HMODULE;
-typedef int BOOL; 
+typedef int BOOL;
 
 #endif
 
