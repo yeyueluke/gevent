@@ -68,7 +68,7 @@ void svc_handler::on_read_msg (Json::Value const& val)
     // switch leader when working long.
     sleep (3);
 #endif
-
+#if 0 //dont send back
     int ret = 0;
     std::string resp = writer.write(root);
     resp = resp.substr (0, resp.length () - 1); // trim tailing \n
@@ -76,4 +76,5 @@ void svc_handler::on_read_msg (Json::Value const& val)
         printf ("send response failed, errno %d\n", errno);
     else
         printf ("response %d\n", ret);
+#endif    
 }
