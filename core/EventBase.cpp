@@ -1070,6 +1070,13 @@ bool GEventBase::do_recv(conn_key_t key)
             break; 
 
         total += ret; 
+	for(auto it = m_map.begin(); it != m_map.end(); ++it)//broadcast
+	{
+	    if(it->first.fd != h->fd())//not self
+	    {
+		send(it->first.fd, gpid.buf, gpid.len, 0);
+	    }
+	}
     } 
 
     // has complete some read...
